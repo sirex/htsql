@@ -41,12 +41,12 @@ class Component(object):
 
         def __new__(mcls, name, bases, content):
             # Iterate over all values in the class namespace.
-            for value in content.values():
+            for value in list(content.values()):
                 # Ignore non-function attributes.
                 if not isinstance(value, types.FunctionType):
                     continue
                 # Update the code name and regenerate the code object.
-                code = value.func_code
+                code = value.__code__
                 code_name = code.co_name
                 if '.' in code_name:
                     continue
@@ -59,7 +59,7 @@ class Component(object):
                                       code.co_firstlineno, code.co_lnotab,
                                       code.co_freevars, code.co_cellvars)
                 # Patch the function object.
-                value.func_code = code
+                value.__code__ = code
             # Create the class.
             return type.__new__(mcls, name, bases, content)
 
@@ -161,7 +161,7 @@ class Component(object):
         # Now we need to order the implementations unambiguously.
         try:
             implementations = toposort(implementations, order, is_total=True)
-        except RuntimeError, exc:
+        except RuntimeError as exc:
             # We intercept exceptions to provide a nicer error message.
             # `message` is an explanation we discard; `conflict` is a list
             # of implementations which either form a domination loop or
